@@ -400,7 +400,7 @@
     var hide = hideExpiredBox.checked;
     try {
       var res = await fetchCerts(domain, hide, setStatus);
-      setStatus('Analysing ' + res.certs.length + ' certificates…');
+      setStatus('Analyzing ' + res.certs.length + ' certificates…');
       await new Promise(function (r) { setTimeout(r, 0); });
       var data = analyse(domain, res.certs);
       renderResult(domain, data, res, hide);
