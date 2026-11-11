@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Certificate Transparency Search — Certificates and Subdomains of a Domain</title>
+  <meta name="description" content="Free Certificate Transparency search. List the TLS certificates logged for a domain and its subdomains: names, issuer, validity, serial, expiry flags and a de-duplicated subdomain list. Copy as CSV.">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://ct.hbenali.ovh/">
+
+  <!-- Security (static hosting: no custom HTTP headers, so CSP/referrer are set here; X-Frame-Options/X-Content-Type-Options need a real header and aren't achievable via meta) -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' data:; connect-src https://crt.sh https://api.certspotter.com; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Certificate Transparency Search — Certificates and Subdomains of a Domain">
+  <meta property="og:description" content="List the certificates in public CT logs for a domain, with issuers, expiry and unique subdomains.">
+  <meta property="og:url" content="https://ct.hbenali.ovh/">
+  <meta property="og:site_name" content="CT Search">
+  <meta property="og:locale" content="en_US">
+  <meta property="og:image" content="https://ct.hbenali.ovh/favicon.svg">
+  <meta property="og:image:type" content="image/svg+xml">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Certificate Transparency Search — Certificates and Subdomains of a Domain">
+  <meta name="twitter:description" content="List the certificates in public CT logs for a domain, with issuers, expiry and unique subdomains.">
+  <meta name="twitter:image" content="https://ct.hbenali.ovh/favicon.svg">
+
+  <!-- SVG Favicon -->
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="alternate icon" href="/favicon.ico">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <meta name="color-scheme" content="dark light">
+  <meta name="theme-color" content="#0c1218" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#f4efe4" media="(prefers-color-scheme: light)">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="CT Search">
+
+  <!-- crt.sh and Cert Spotter are only called on demand after a search -->
+  <link rel="dns-prefetch" href="https://crt.sh">
+
+  <!-- Structured data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebSite",
+        "url": "https://ct.hbenali.ovh/",
+        "name": "CT Search",
+        "description": "Free Certificate Transparency search: certificates and subdomains logged for a domain.",
+        "potentialAction": {
+          "@type": "SearchAction",
+          "target": "https://ct.hbenali.ovh/?domain={search_term_string}",
+          "query-input": "required name=search_term_string"
+        }
+      },
+      {
+        "@type": "WebApplication",
+        "name": "CT Search",
+        "url": "https://ct.hbenali.ovh/",
+        "applicationCategory": "SecurityApplication",
+        "operatingSystem": "Any",
+        "description": "List the certificates in public Certificate Transparency logs for a domain, with issuers, validity, expiry flags and a unique subdomain list.",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+      }
+    ]
+  }
+  </script>
+
+
+  <link rel="preload" href="/fonts/big-shoulders-latin-wght.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/fonts/newsreader-latin-wght.woff2" as="font" type="font/woff2" crossorigin>
+  <script src="/theme.js"></script>
+  <link rel="stylesheet" href="/site.css">
+</head>
+
+<body>
+<a class="skip" href="#domainInput">Skip to the tool</a>
+<header class="hero">
+  <div class="wrap">
+    <h1 class="display">
+      <span class="line"><span>CT</span></span>
+      <span class="line"><span>certificate search</span></span>
+    </h1>
+    <p class="lead">Every certificate <strong>publicly logged</strong> for a domain and its subdomains, and the hostnames they reveal.</p>
+  </div>
+</header>
+
+<main>
+  <section class="block wrap" aria-labelledby="lookupTitle">
+    <h2 class="block-title" id="lookupTitle">Search Certificate Transparency logs</h2>
+
+    <form class="field input-group" id="searchForm" novalidate>
+      <label for="domainInput">
+        <span>Domain name</span>
+        <i>example.com</i>
+      </label>
+      <div class="field-row domain-input-wrapper">
+        <input type="text" id="domainInput" placeholder="e.g. example.com" value="example.com" spellcheck="false" autocomplete="off" autocapitalize="none">
+        <button class="btn" id="checkBtn" type="submit">
+          <span id="btnText">Search</span>
+          <span id="btnLoader" hidden></span>
+        </button>
+      </div>
+      <div class="opts">
+        <label for="hideExpired"><input type="checkbox" id="hideExpired"> Hide expired certificates (smaller and faster for big domains)</label>
+      </div>
+    </form>
+    <p class="status" id="status" role="status" aria-live="polite"></p>
+
+    <div class="result-area" id="resultContainer" aria-live="polite">
+      <div class="state empty empty-state" id="placeholderState">
+        <p>Enter a domain and click "Search".<br>Certificate Transparency logs are public, append-only records of issued TLS certificates. Searching them reveals subdomains, issuers and expiry dates.</p>
+      </div>
+      <div id="recordsContainer" hidden></div>
+      <div id="errorContainer" hidden></div>
+    </div>
+  </section>
+
+  <section class="block wrap" aria-labelledby="limitsTitle">
+    <h2 class="block-title" id="limitsTitle">What a browser can and cannot do</h2>
+    <p class="block-note">This page calls <strong>crt.sh</strong> (Sectigo) first and falls back to <strong>Cert Spotter</strong> (SSLMate). Both allow cross-origin requests from a browser, but both are free public services: crt.sh is often slow or overloaded on large domains and then answers with a 5xx or times out, and Cert Spotter allows only about 10 unauthenticated requests per hour per IP. Your search term is sent to whichever service answers. If both fail, no result is shown and none is invented. A browser cannot query the CT logs directly: they expose raw RFC 6962 endpoints with no search by name. You can run the same query yourself:</p>
+    <div class="curl" id="curlBox"></div>
+    <div class="actions">
+      <button type="button" class="btn quiet" id="copyCurl">Copy command</button>
+    </div>
+    <p class="block-note">Only certificates logged in CT are listed. Certificates a CA never logged (private CAs, some older certificates) will not appear, and the list says nothing about which hosts are live.</p>
+  </section>
+</main>
+
+<div class="foot">
+  <footer>
+    <span>using <strong>crt.sh</strong> and <strong>Cert Spotter</strong></span>
+    <span>certificates and subdomains from CT logs</span>
+    <a href="https://hbenali.ovh" target="_blank" rel="noopener noreferrer">hbenali.ovh</a>
+  </footer>
+</div>
+
+<script src="/app.js" defer></script>
+</body>
+</html>

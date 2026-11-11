@@ -1,0 +1,8 @@
+# CT Search
+
+> Free, single-page tool to list the TLS certificates logged in public Certificate Transparency logs for a domain and its subdomains.
+
+Static site (no backend, no build step, no dependencies) at https://ct.hbenali.ovh. Queries crt.sh from the browser (Cert Spotter as fallback), shows names, issuer, validity with expired and expiring-soon flags, serial numbers and a de-duplicated subdomain list with wildcard flags, with a filter and CSV copy. Use `?domain=example.com` to run a search on load.
+
+## Pages
+- [CT Search](https://ct.hbenali.ovh/): the tool itself.
